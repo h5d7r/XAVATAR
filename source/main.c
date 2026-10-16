@@ -70,8 +70,8 @@ static int send_all(int fd, const void *data, size_t size) {
   return 0;
 }
 
-static void response(int fd, int code, const char *type, const void *body,
-                     size_t len) {
+static void response_headers(int fd, int code, const char *type, const void *body,
+                             size_t len, const char *extra) {
   char header[1200];
   const char *reason = code == 200   ? "OK"
                        : code == 201 ? "Created"
@@ -85,13 +85,18 @@ static void response(int fd, int code, const char *type, const void *body,
       header, sizeof(header),
       "HTTP/1.1 %d %s\r\nContent-Type: %s\r\nContent-Length: "
       "%zu\r\nConnection: close\r\n"
-      "Cache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\n"
+      "%sCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\n"
       "Content-Security-Policy: default-src 'self'; img-src 'self' blob: "
       "data:; style-src 'self'; script-src 'self'; connect-src 'self'; "
       "object-src 'none'; base-uri 'none'; frame-ancestors 'none'\r\n\r\n",
-      code, reason, type, len);
+      code, reason, type, len, extra);
   if (n > 0 && (size_t)n < sizeof(header) && !send_all(fd, header, (size_t)n))
     send_all(fd, body, len);
+}
+
+static void response(int fd, int code, const char *type, const void *body,
+                     size_t len) {
+  response_headers(fd, code, type, body, len, "");
 }
 
 static void escape_json(const char *in, char *out, size_t cap) {
@@ -172,7 +177,10 @@ static int receive_request(int fd, Request *r) {
         if (!isdigit((unsigned char)*p))
           return 400;
         len = len * 10 + (unsigned)(*p - '0');
-        if (len > XA_MAX_PNG)
+        size_t limit = !strncmp(r->target, "/api/upload", 11) &&
+                               (r->target[11] == '?' || !r->target[11])
+                           ? XA_MAX_PACKAGE : XA_MAX_PNG;
+        if (len > limit)
           return 413;
       }
       r->length = len;
@@ -336,16 +344,24 @@ static void serve_library(int fd) {
   free(body);
 }
 
+static int library_path(const char *target, char *path, size_t cap) {
+  char name[128], base[1024];
+  if (query(target, "name", name, sizeof(name)) != 1 || !xa_filename(name)) {
+    return -1;
+  }
+  xa_path(base, sizeof(base), "/data/AVATARS");
+  snprintf(path, cap, "%s/%s", base, name);
+  return 0;
+}
+
 static int library_avatar(const char *target, Avatar *a, char *error,
                           size_t cap) {
-  char name[128], base[1024], path[1200];
+  char path[1200];
   Blob zip = {0};
-  if (query(target, "name", name, sizeof(name)) != 1 || !xa_filename(name)) {
+  if (library_path(target, path, sizeof(path))) {
     snprintf(error, cap, "Invalid avatar filename.");
     return 400;
   }
-  xa_path(base, sizeof(base), "/data/AVATARS");
-  snprintf(path, sizeof(path), "%s/%s", base, name);
   if (xa_read(path, &zip, XA_MAX_PACKAGE)) {
     snprintf(error, cap, "Avatar file is missing, unreadable, or too large.");
     return 404;
@@ -382,6 +398,71 @@ static int save_package(const char *name, Blob *zip, char *path,
   rmdir(temp);
   errno = saved_errno;
   return result;
+}
+
+static void upload_package(int fd, Request *r) {
+  char name[128], saved[1200], error[2000];
+  if (query(r->target, "name", name, sizeof(name)) != 1 || !xa_filename(name)) {
+    message(fd, 400, "Invalid avatar filename.");
+    return;
+  }
+  if (strcmp(r->content_type, "application/octet-stream")) {
+    message(fd, 400, "Expected application/octet-stream.");
+    return;
+  }
+  Avatar avatar = {0};
+  if (avatar_open(r->body, r->length, &avatar, error, sizeof(error))) {
+    message(fd, 400, error);
+    return;
+  }
+  avatar_free(&avatar);
+  Blob zip = {r->body, r->length};
+  if (save_package(name, &zip, saved, sizeof(saved))) {
+    message(fd, errno == EEXIST ? 409 : 500,
+            errno == EEXIST ? "That filename already exists. Choose another name."
+                           : "Could not save the avatar. Check free space and permissions.");
+    return;
+  }
+  message(fd, 201, "Avatar added to your library.");
+}
+
+static void download_package(int fd, Request *r) {
+  char path[1200], name[128], header[256];
+  Blob zip = {0};
+  if (library_path(r->target, path, sizeof(path))) {
+    message(fd, 400, "Invalid avatar filename.");
+    return;
+  }
+  if (xa_read(path, &zip, XA_MAX_PACKAGE)) {
+    message(fd, 404, "Avatar file is missing, unreadable, or too large.");
+    return;
+  }
+  query(r->target, "name", name, sizeof(name));
+  snprintf(header, sizeof(header), "Content-Disposition: attachment; filename=\"%s\"\r\n", name);
+  response_headers(fd, 200, "application/octet-stream", zip.data, zip.size, header);
+  free(zip.data);
+}
+
+static void delete_package(int fd, Request *r) {
+  char path[1200];
+  struct stat st;
+  if (library_path(r->target, path, sizeof(path))) {
+    message(fd, 400, "Invalid avatar filename.");
+    return;
+  }
+  if (lstat(path, &st)) {
+    message(fd, errno == ENOENT ? 404 : 500, "Could not find the avatar file.");
+    return;
+  }
+  if (!S_ISREG(st.st_mode)) {
+    message(fd, 400, "Only regular avatar files can be deleted.");
+    return;
+  }
+  if (unlink(path)) {
+    message(fd, 500, "Could not delete the avatar. Check permissions.");
+    return;
+  }
+  message(fd, 200, "Avatar deleted from your library.");
 }
 
 static void create_avatar(int fd, Request *r) {
@@ -456,15 +537,18 @@ static void handle(int fd, Request *r) {
     *q = 0;
   if (!strcmp(r->method, "GET")) {
     if (!strcmp(path, "/api/status")) {
+      int language_id;
+      const char *language = xa_language(&language_id);
 #ifdef XAVATAR_HOST
-      const char *body =
-          "{\"name\":\"XAVATAR\",\"port\":4002,\"version\":\"" XA_VERSION
-          "\",\"hostTest\":true}";
+      const char *host_test = "true";
 #else
-      const char *body =
-          "{\"name\":\"XAVATAR\",\"port\":4002,\"version\":\"" XA_VERSION
-          "\",\"hostTest\":false}";
+      const char *host_test = "false";
 #endif
+      char body[256];
+      snprintf(body, sizeof(body), "{\"name\":\"XAVATAR\",\"port\":4002,"
+               "\"version\":\"" XA_VERSION "\",\"hostTest\":%s,"
+               "\"language\":\"%s\",\"systemLanguage\":%d}",
+               host_test, language, language_id);
       response(fd, 200, "application/json", body, strlen(body));
       return;
     }
@@ -474,6 +558,10 @@ static void handle(int fd, Request *r) {
     }
     if (!strcmp(path, "/api/avatars")) {
       serve_library(fd);
+      return;
+    }
+    if (!strcmp(path, "/api/download")) {
+      download_package(fd, r);
       return;
     }
     if (!strcmp(path, "/api/preview")) {
@@ -506,6 +594,10 @@ static void handle(int fd, Request *r) {
       asset = "app.js";
       type = "application/javascript; charset=utf-8";
     }
+    if (!strcmp(path, "/i18n.js")) {
+      asset = "i18n.js";
+      type = "application/javascript; charset=utf-8";
+    }
     if (!strcmp(path, "/logo.png")) {
       asset = "logo.png";
       type = "image/png";
@@ -519,6 +611,14 @@ static void handle(int fd, Request *r) {
       return;
     }
   } else if (!strcmp(r->method, "POST")) {
+    if (!strcmp(path, "/api/upload")) {
+      upload_package(fd, r);
+      return;
+    }
+    if (!strcmp(path, "/api/delete")) {
+      delete_package(fd, r);
+      return;
+    }
     if (!strcmp(path, "/api/stop")) {
       service_running = 0;
       message(fd, 200, "XAVATAR is shutting down.");

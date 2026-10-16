@@ -11,7 +11,7 @@ include $(PS4_PAYLOAD_SDK)/toolchain/orbis.mk
 TARGET := build/XAVATAR.elf
 INSTALLER := build/XAVATAR-installer.elf
 PAYLOAD_RESOURCE := build/payload.c
-LDLIBS := -lSceNet -lSceUserService
+LDLIBS := -lSceNet -lSceUserService -lSceSystemService
 endif
 
 CPPFLAGS := -Iinclude -Ivendor -DMINIZ_NO_STDIO -DMINIZ_NO_TIME -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES
@@ -24,7 +24,7 @@ SOURCES := source/main.c source/platform.c source/avatar.c build/assets.c vendor
 
 .PHONY: all clean package
 all: $(TARGET) $(INSTALLER)
-build/assets.c: ui.html styles.css app.js assets/logo.png tools/embed_assets.py
+build/assets.c: ui.html styles.css app.js i18n.js assets/logo.png tools/embed_assets.py
 	python3 tools/embed_assets.py $@
 $(TARGET): $(SOURCES) $(wildcard include/*.h vendor/*.h) Makefile
 	mkdir -p build

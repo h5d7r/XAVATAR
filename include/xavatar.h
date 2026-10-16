@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #define XA_PORT 4002
-#define XA_VERSION "1.0.2"
+#define XA_VERSION "1.0.3"
 #define XA_CREDIT "Haider A.H (c) " XA_VERSION "V"
 #define XA_MAX_PACKAGE (4 * 1024 * 1024)
 #define XA_MAX_PNG (2 * 1024 * 1024)
@@ -39,6 +39,7 @@ void xa_notify(const char *message);
 void xa_log(const char *message);
 int xa_platform_init(void);
 void xa_platform_end(void);
+const char *xa_language(int *system_id);
 
 void avatar_free(Avatar *avatar);
 int avatar_create(const void *png, size_t len, Blob *zip, char *error,

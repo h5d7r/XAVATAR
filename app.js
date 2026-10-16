@@ -4,9 +4,16 @@
   var $ = function (id) {
     return document.getElementById(id);
   };
+  var t = window.XaI18n.t;
+  window.XaI18n.bind();
+  var languageChoice = "auto";
+  try { languageChoice = localStorage.getItem("xavatar.language") || "auto"; } catch (_) {}
+  if (languageChoice !== "auto" && !Object.prototype.hasOwnProperty.call(window.XaI18n.languages, languageChoice)) languageChoice = "auto";
   var state = {
     mode: "both",
     connected: false,
+    hostTest: false,
+    systemLanguage: "en",
     users: [],
     avatars: [],
     crop: null,
@@ -36,10 +43,10 @@
     var item = document.createElement("div");
     item.className = "toast" + (error ? " error" : "");
     var label = document.createElement("span");
-    label.textContent = text;
+    label.textContent = t(text);
     var close = document.createElement("button");
     close.textContent = "×";
-    close.setAttribute("aria-label", "Dismiss notification");
+    close.setAttribute("aria-label", t("Dismiss notification"));
     close.onclick = function () {
       item.remove();
     };
@@ -71,13 +78,13 @@
       var result = await response.json();
       if (!response.ok)
         throw new Error(
-          result.message || "The payload could not complete this operation.",
+          result.message || t("The payload could not complete this operation."),
         );
       return result;
     } catch (error) {
       if (error.name === "AbortError")
         throw new Error(
-          "The payload took too long to respond. Check your connection.",
+          t("The payload took too long to respond. Check your connection."),
         );
       throw error;
     } finally {
@@ -88,8 +95,8 @@
   function busy(text, detail) {
     state.busy = !!text;
     $("busyOverlay").hidden = !text;
-    $("busyText").textContent = text || "";
-    $("busyDetail").textContent = detail || "Keep this page open.";
+    $("busyText").textContent = t(text || "");
+    $("busyDetail").textContent = t(detail || "Keep this page open.");
     $("uploadProgress").hidden = true;
     document.body.setAttribute("aria-busy", text ? "true" : "false");
     updateAction();
@@ -97,26 +104,27 @@
 
   function setConnection(online, test) {
     state.connected = online;
+    state.hostTest = !!test;
     $("connection").classList.toggle("online", online);
     $("connectionText").textContent = online
       ? test
-        ? "Host test connected"
-        : "Payload connected"
+        ? t("Host test connected")
+        : t("Payload connected")
       : state.stopped
-        ? "Service stopped"
-        : "Payload offline";
+        ? t("Service stopped")
+        : t("Payload offline");
     $("connectionBanner").hidden = online;
     $("connectionMessage").textContent = state.stopped
-      ? "XAVATAR is stopped. Load the payload again on your PS4 to reopen port 4002."
-      : "Cannot reach the payload. Check that XAVATAR is running on your PS4.";
-    $("reconnect").textContent = state.stopped ? "Check again" : "Reconnect";
+      ? t("XAVATAR is stopped. Load the payload again on your PS4 to reopen port 4002.")
+      : t("Cannot reach the payload. Check that XAVATAR is running on your PS4.");
+    $("reconnect").textContent = state.stopped ? t("Check again") : t("Reconnect");
     $("footerStatus").textContent = online
       ? test
-        ? "LOCAL TEST · PORT 4002"
-        : "CONNECTED · PORT 4002"
+        ? t("LOCAL TEST · PORT 4002")
+        : t("CONNECTED · PORT 4002")
       : state.stopped
-        ? "STOPPED · PORT 4002 CLOSED"
-        : "PAYLOAD OFFLINE";
+        ? t("STOPPED · PORT 4002 CLOSED")
+        : t("PAYLOAD OFFLINE");
     updateAction();
   }
 
@@ -128,6 +136,10 @@
       var status = await api("/api/status");
       if (state.stopped) return;
       if (status.name !== "XAVATAR") throw new Error("Unexpected service.");
+      if (state.systemLanguage !== status.language) {
+        state.systemLanguage = status.language || "en";
+        if (languageChoice === "auto") applyLanguage();
+      }
       var wasConnected = state.connected;
       setConnection(true, status.hostTest);
       if (!wasConnected) await Promise.all([loadUsers(), loadLibrary()]);
@@ -144,8 +156,8 @@
     var placeholder = document.createElement("option");
     placeholder.value = "";
     placeholder.textContent = state.users.length
-      ? "Select a PS4 user"
-      : "No PS4 users available";
+      ? t("Select a PS4 user")
+      : t("No PS4 users available");
     select.appendChild(placeholder);
     state.users.forEach(function (user) {
       var option = document.createElement("option");
@@ -164,7 +176,7 @@
   function loadUsers() {
     if (state.stopped) return Promise.resolve();
     if (userLoadPromise) return userLoadPromise;
-    $("userHelp").textContent = "Loading usernames…";
+    $("userHelp").textContent = t("Loading usernames…");
     $("refreshUsers").disabled = true;
     userLoadPromise = (async function () {
       try {
@@ -173,15 +185,15 @@
         populateUsers($("userSelect"), $("userSelect").value);
         populateUsers($("installUser"), $("installUser").value);
         $("userHelp").textContent = state.users.length
-          ? "Select the profile for your new look."
-          : "No local users found. Refresh after signing in on your PS4.";
+          ? t("Select the profile for your new look.")
+          : t("No local users found. Refresh after signing in on your PS4.");
       } catch (error) {
         state.users = [];
         populateUsers($("userSelect"));
         populateUsers($("installUser"));
         $("userHelp").textContent =
-          "Could not load usernames. Use Refresh to try again.";
-        toast("Loading usernames failed: " + error.message, true);
+          t("Could not load usernames. Use Refresh to try again.");
+        toast(error.message, true);
       } finally {
         $("refreshUsers").disabled = false;
         userLoadPromise = null;
@@ -194,7 +206,7 @@
   function loadLibrary() {
     if (state.stopped) return Promise.resolve();
     if (libraryLoadPromise) return libraryLoadPromise;
-    $("librarySummary").textContent = "Loading avatars…";
+    $("librarySummary").textContent = t("Loading avatars…");
     $("refreshLibrary").disabled = true;
     $("libraryError").hidden = true;
     libraryLoadPromise = (async function () {
@@ -211,9 +223,9 @@
             true,
           );
       } catch (error) {
-        $("librarySummary").textContent = "Library unavailable";
+        $("librarySummary").textContent = t("Library unavailable");
         $("libraryError").textContent =
-          "Could not load avatars: " + error.message;
+          t(error.message);
         $("libraryError").hidden = false;
         $("libraryEmpty").hidden = true;
       } finally {
@@ -233,17 +245,14 @@
     $("libraryEmpty").hidden = !!avatars.length;
     if (!avatars.length) {
       $("libraryEmpty").querySelector("h2").textContent = term
-        ? "No matching avatars."
-        : "Your next look starts here.";
+        ? t("No matching avatars.")
+        : t("Your next look starts here.");
       $("libraryEmpty").querySelector("p").textContent = term
-        ? "Try another name or clear your search."
-        : "Create and save your first avatar to start your collection.";
+        ? t("Try another name or clear your search.")
+        : t("Create and save your first avatar to start your collection.");
       $("emptyCreate").hidden = !!term;
     }
-    $("librarySummary").textContent =
-      avatars.length +
-      (avatars.length === 1 ? " avatar" : " avatars") +
-      (term ? " found" : " in your collection");
+    $("librarySummary").textContent = t(term ? "{count} avatars found" : "{count} avatars in your collection", {count: avatars.length});
     avatars.forEach(function (avatar) {
       var card = document.createElement("article");
       card.className = "avatar-card";
@@ -266,21 +275,42 @@
         avatar.name + " · " + Math.ceil(avatar.size / 1024) + " KB";
       var button = document.createElement("button");
       button.className = "btn";
-      button.textContent = "Install avatar →";
+      button.textContent = t("Install avatar");
+      button.disabled = !state.connected || state.busy;
       button.onclick = function () {
         openInstall(avatar.name);
       };
       img.onerror = function () {
         img.hidden = true;
-        badge.textContent = "INVALID PACKAGE";
+        badge.textContent = t("INVALID PACKAGE");
         button.disabled = true;
-        meta.textContent = "Preview unavailable · check this package";
+        button.dataset.invalid = "true";
+        meta.textContent = t("Preview unavailable · check this package");
       };
       thumb.appendChild(img);
       thumb.appendChild(badge);
       info.appendChild(name);
       info.appendChild(meta);
       info.appendChild(button);
+      var actions = document.createElement("div");
+      actions.className = "avatar-actions";
+      var download = document.createElement("button");
+      download.className = "btn small";
+      download.textContent = t("Download");
+      download.disabled = !state.connected || state.busy;
+      download.onclick = function () { downloadAvatar(avatar.name); };
+      var remove = document.createElement("button");
+      remove.className = "btn small danger";
+      remove.textContent = t("Delete");
+      remove.disabled = !state.connected || state.busy;
+      remove.onclick = function () {
+        state.selected = avatar.name;
+        $("deleteName").textContent = avatar.name;
+        openModal("deleteModal");
+      };
+      actions.appendChild(download);
+      actions.appendChild(remove);
+      info.appendChild(actions);
       card.appendChild(thumb);
       card.appendChild(info);
       $("libraryGrid").appendChild(card);
@@ -311,22 +341,22 @@
     $("filenameField").hidden = value === "install";
     $("workflowHint").textContent =
       value === "both"
-        ? "INSTALL + SAVE"
+        ? t("INSTALL + SAVE")
         : value === "save"
-          ? "SAVE TO LIBRARY"
-          : "DIRECT INSTALL";
+          ? t("SAVE TO LIBRARY")
+          : t("DIRECT INSTALL");
     $("createButton").querySelector("span").textContent =
       value === "both"
-        ? "Create & install"
+        ? t("Create & install")
         : value === "save"
-          ? "Create XAVATAR file"
-          : "Install without saving";
+          ? t("Create XAVATAR file")
+          : t("Install without saving");
     updateAction();
   }
 
-  function validName() {
+  function validName(input) {
     return /^[A-Za-z0-9_-][A-Za-z0-9 _-]{0,91}$/.test(
-      $("filename").value.trim(),
+      (input || $("filename")).value.trim(),
     );
   }
   function updateAction() {
@@ -343,26 +373,33 @@
       !state.connected || state.busy || connectionInFlight || state.stopped;
     $("refreshUsers").disabled = state.stopped || state.busy;
     $("refreshLibrary").disabled = state.stopped || state.busy;
+    $("languageSelect").disabled = state.busy;
+    $("uploadAvatar").disabled = !state.connected || state.busy;
+    $("uploadButton").disabled = !state.connected || state.busy || !$("packageInput").files.length || !validName($("packageName"));
+    $("deleteButton").disabled = !state.connected || state.busy;
+    $("libraryGrid").querySelectorAll("button").forEach(function (button) {
+      button.disabled = !state.connected || state.busy || button.dataset.invalid === "true";
+    });
     var name = state.users.find(function (u) {
       return u.id === $("userSelect").value;
     });
     $("previewName").textContent =
-      name && needUser ? name.name : "Your next identity";
+      name && needUser ? name.name : t("Your next identity");
     $("installButton").disabled =
       !state.connected || !$("installUser").value || state.busy;
     $("actionHint").textContent = !state.connected
-      ? "Connect to the payload to continue."
+      ? t("Connect to the payload to continue.")
       : !state.crop
-        ? "Choose an image to get started."
+        ? t("Choose an image to get started.")
         : needUser && !$("userSelect").value
-          ? "Select the PS4 user for this avatar."
+          ? t("Select the PS4 user for this avatar.")
           : needName && !validName()
-            ? "Use letters, numbers, spaces, hyphens or underscores for the name."
+            ? t("Use letters, numbers, spaces, hyphens or underscores for the name.")
             : state.mode === "install"
-              ? "Applied directly. No .xavatar file will be saved."
+              ? t("Applied directly. No .xavatar file will be saved.")
               : state.mode === "save"
-                ? "Your package will be ready in the avatar library."
-                : "Apply it now. Keep it in your library.";
+                ? t("Your package will be ready in the avatar library.")
+                : t("Apply it now. Keep it in your library.");
   }
 
   function openModal(id) {
@@ -450,14 +487,14 @@
   function loadImage(file) {
     if (!file || state.busy) return;
     if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type)) {
-      toast("Choose a PNG, JPG, WebP or GIF image.", true);
+      toast(t("Choose a PNG, JPG, WebP or GIF image."), true);
       return;
     }
     if (file.size > 20 * 1024 * 1024) {
-      toast("Choose an image smaller than 20 MB.", true);
+      toast(t("Choose an image smaller than 20 MB."), true);
       return;
     }
-    busy("Loading your image…", "Preparing the crop editor.");
+    busy(t("Loading your image…"), t("Preparing the crop editor."));
     var url = URL.createObjectURL(file),
       image = new Image();
     image.onload = function () {
@@ -465,7 +502,7 @@
         URL.revokeObjectURL(url);
         busy("");
         toast(
-          "This image is too large. Choose an image below 32 megapixels.",
+          t("This image is too large. Choose an image below 32 megapixels."),
           true,
         );
         return;
@@ -481,7 +518,7 @@
     image.onerror = function () {
       URL.revokeObjectURL(url);
       busy("");
-      toast("This image could not be opened. Try another image.", true);
+      toast(t("This image could not be opened. Try another image."), true);
     };
     image.src = url;
   }
@@ -563,11 +600,11 @@
   };
   $("resetCrop").onclick = resetCrop;
   $("applyCrop").onclick = function () {
-    busy("Processing your crop…", "Preparing a 440 × 440 image.");
+    busy(t("Processing your crop…"), t("Preparing a 440 × 440 image."));
     canvas.toBlob(function (blob) {
       if (!blob) {
         busy("");
-        toast("Could not process the image. Please try again.", true);
+        toast(t("Could not process the image. Please try again."), true);
         return;
       }
       state.crop = blob;
@@ -593,41 +630,39 @@
       busy("");
       closeModal("cropModal");
       updateAction();
-      toast("Crop ready. Your next look is taking shape.");
+      toast(t("Crop ready. Your next look is taking shape."));
     }, "image/png");
   };
 
-  function upload(path, blob) {
+  function upload(path, blob, packageUpload) {
     return new Promise(function (resolve, reject) {
       var xhr = new XMLHttpRequest();
       xhr.open("POST", path);
       xhr.timeout = 120000;
-      xhr.setRequestHeader("Content-Type", "image/png");
+      xhr.setRequestHeader("Content-Type", packageUpload ? "application/octet-stream" : "image/png");
       xhr.setRequestHeader("X-XAVATAR", "1");
       xhr.upload.onprogress = function (event) {
         if (event.lengthComputable) {
           $("uploadProgress").hidden = false;
           $("uploadProgress").value = (event.loaded / event.total) * 100;
           $("busyDetail").textContent =
-            "Sending your cropped image… " +
-            Math.round((event.loaded / event.total) * 100) +
-            "%";
+            t("Sending your file… {percent}%", {percent: Math.round((event.loaded / event.total) * 100)});
         }
       };
       xhr.upload.onload = function () {
         $("uploadProgress").hidden = true;
         $("busyDetail").textContent =
-          state.mode === "install"
-            ? "Creating textures and installing your avatar…"
+          packageUpload ? t("Checking and saving your package…") : state.mode === "install"
+            ? t("Creating textures and installing your avatar…")
             : state.mode === "save"
-              ? "Creating textures and saving your package…"
-              : "Creating textures, saving and installing your avatar…";
+              ? t("Creating textures and saving your package…")
+              : t("Creating textures, saving and installing your avatar…");
       };
       xhr.onload = function () {
         try {
           var result = JSON.parse(xhr.responseText);
           if (xhr.status < 200 || xhr.status >= 300)
-            throw new Error(result.message || "Operation failed.");
+            throw new Error(result.message || t("Operation failed."));
           resolve(result);
         } catch (error) {
           reject(error);
@@ -636,14 +671,14 @@
       xhr.onerror = function () {
         reject(
           new Error(
-            "Connection lost. Reconnect and check the library before retrying.",
+            t("Connection lost. Reconnect and check the library before retrying."),
           ),
         );
       };
       xhr.ontimeout = function () {
         reject(
           new Error(
-            "The operation timed out. Check the library and profile before retrying.",
+            t("The operation timed out. Check the library and profile before retrying."),
           ),
         );
       };
@@ -661,10 +696,10 @@
         "&name=" + encodeURIComponent($("filename").value.trim() + ".xavatar");
     busy(
       state.mode === "save"
-        ? "Creating your XAVATAR file…"
+        ? t("Creating your XAVATAR file…")
         : state.mode === "install"
-          ? "Installing your new look…"
-          : "Creating & installing your avatar…",
+          ? t("Installing your new look…")
+          : t("Creating & installing your avatar…"),
     );
     try {
       var result = await upload(path, state.crop);
@@ -689,8 +724,8 @@
   $("installButton").onclick = async function () {
     if (this.disabled) return;
     busy(
-      "Installing your avatar…",
-      "Applying your chosen look to the selected PS4 user.",
+      t("Installing your avatar…"),
+      t("Applying your chosen look to the selected PS4 user."),
     );
     try {
       var result = await api(
@@ -752,16 +787,16 @@
   $("connection").onclick = reconnect;
   $("stopService").onclick = async function () {
     if (this.disabled) return;
-    busy("Stopping XAVATAR…", "Closing port 4002 and ending the payload.");
+    busy(t("Stopping XAVATAR…"), t("Closing port 4002 and ending the payload."));
     try {
       await api("/api/stop", { method: "POST" });
       state.stopped = true;
       clearInterval(pollTimer);
       pollTimer = null;
       setConnection(false);
-      toast("XAVATAR stopped. Load the payload again to reopen port 4002.");
+      toast(t("XAVATAR stopped. Load the payload again to reopen port 4002."));
     } catch (error) {
-      toast("Could not confirm shutdown: " + error.message, true);
+      toast(error.message, true);
     } finally {
       busy("");
     }
@@ -793,7 +828,100 @@
       event.returnValue = "";
     }
   });
-  mode("both");
+  function applyLanguage() {
+    window.XaI18n.set(languageChoice === "auto" ? state.systemLanguage : languageChoice);
+    $("languageSelect").options[0].textContent = t("Automatic (PS4)");
+    $("languageSelect").value = languageChoice;
+    populateUsers($("userSelect"), $("userSelect").value);
+    populateUsers($("installUser"), $("installUser").value);
+    $("userHelp").textContent = t(state.users.length ? "Select the profile for your new look." : "Select a user on your PS4.");
+    setConnection(state.connected, state.hostTest);
+    mode(state.mode);
+    renderLibrary();
+  }
+  var autoOption = document.createElement("option");
+  autoOption.value = "auto";
+  $("languageSelect").appendChild(autoOption);
+  Object.keys(window.XaI18n.languages).forEach(function (code) {
+    var option = document.createElement("option");
+    option.value = code;
+    option.lang = code;
+    option.textContent = window.XaI18n.languages[code];
+    $("languageSelect").appendChild(option);
+  });
+  $("languageSelect").onchange = function () {
+    languageChoice = this.value;
+    try { localStorage.setItem("xavatar.language", languageChoice); } catch (_) {}
+    applyLanguage();
+  };
+  $("uploadAvatar").onclick = function () {
+    $("packageInput").value = "";
+    $("packageName").value = "";
+    $("packageSelected").textContent = "";
+    openModal("uploadModal");
+    updateAction();
+  };
+  $("choosePackage").onclick = function () { $("packageInput").click(); };
+  $("packageInput").onchange = function () {
+    var file = this.files[0];
+    if (file && (!/\.xavatar$/i.test(file.name) || !file.size || file.size > 4 * 1024 * 1024)) {
+      this.value = "";
+      toast(t("Choose a .xavatar file smaller than 4 MB."), true);
+    } else if (file) {
+      $("packageName").value = file.name.replace(/\.xavatar$/i, "").replace(/[^A-Za-z0-9 _-]/g, "-").trim().slice(0, 92) || "my-avatar";
+    }
+    $("packageSelected").textContent = this.files[0] ? this.files[0].name : "";
+    updateAction();
+  };
+  $("packageName").oninput = updateAction;
+  $("uploadButton").onclick = async function () {
+    if (this.disabled) return;
+    busy(t("Uploading your avatar…"));
+    try {
+      var result = await upload("/api/upload?name=" + encodeURIComponent($("packageName").value.trim() + ".xavatar"), $("packageInput").files[0], true);
+      busy("");
+      closeModal("uploadModal");
+      toast(result.message);
+      await loadLibrary();
+    } catch (error) { toast(error.message, true); }
+    finally { busy(""); }
+  };
+  $("deleteButton").onclick = async function () {
+    if (this.disabled) return;
+    busy(t("Deleting your avatar…"));
+    try {
+      var result = await api("/api/delete?name=" + encodeURIComponent(state.selected), {method: "POST"});
+      busy("");
+      closeModal("deleteModal");
+      toast(result.message);
+      await loadLibrary();
+    } catch (error) { toast(error.message, true); }
+    finally { busy(""); }
+  };
+  async function downloadAvatar(name) {
+    if (state.busy || !state.connected) return;
+    busy(t("Downloading your avatar…"));
+    var controller = new AbortController();
+    var timer = setTimeout(function () { controller.abort(); }, 30000);
+    try {
+      var response = await fetch("/api/download?name=" + encodeURIComponent(name), {signal: controller.signal});
+      if (!response.ok) {
+        var error = await response.json();
+        throw new Error(error.message || t("Operation failed."));
+      }
+      var blob = await response.blob(), url = URL.createObjectURL(blob);
+      var link = document.createElement("a");
+      link.href = url;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+    } catch (error) {
+      toast(error.name === "AbortError" ? t("The payload took too long to respond. Check your connection.") : error.message, true);
+    } finally { clearTimeout(timer); busy(""); }
+  }
+  applyLanguage();
   connect();
   pollTimer = setInterval(connect, 15000);
 })();

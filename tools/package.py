@@ -40,7 +40,7 @@ print(zip_path)
 
 source_zip = root / 'dist' / 'XAVATAR-source.zip'
 with zipfile.ZipFile(source_zip, 'w', zipfile.ZIP_DEFLATED) as archive:
-    for name in ('README.md', 'LICENSE', 'THIRD_PARTY.md', 'Makefile', '.gitignore', '.gitattributes', 'build.ps1', 'payload_sender.py', 'ui.html', 'styles.css', 'app.js'):
+    for name in ('README.md', 'LICENSE', 'THIRD_PARTY.md', 'Makefile', '.gitignore', '.gitattributes', 'build.ps1', 'payload_sender.py', 'ui.html', 'styles.css', 'app.js', 'i18n.js'):
         archive.write(root / name, Path('XAVATAR-source') / name)
     for name in ('source', 'include', 'vendor', 'tools', 'assets', '.github'):
         for path in sorted((root / name).rglob('*')):

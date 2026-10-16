@@ -183,6 +183,55 @@ svg {
   align-items: center;
   gap: 8px;
 }
+#languageSelect {
+  width: 155px;
+  min-width: 0;
+  padding: 8px 25px 8px 10px;
+  font-size: 11px;
+  border-radius: 10px;
+}
+.library-heading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.avatar-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.avatar-actions .btn {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 4px;
+  overflow-wrap: anywhere;
+}
+.btn.danger {
+  color: #ff91a5;
+  border-color: #673044;
+  background: #21111c;
+}
+.btn.danger:hover:not(:disabled) { background: #401728; }
+.package-body {
+  display: grid;
+  gap: 14px;
+  padding: 24px;
+  line-height: 1.7;
+}
+.package-body small { color: var(--dm); }
+.package-body strong { overflow-wrap: anywhere; }
+#packageSelected { overflow-wrap: anywhere; color: var(--dm); font-size: 12px; }
+.package-body input[type="file"] { max-width: 100%; }
+[dir="rtl"] { letter-spacing: normal; }
+[dir="rtl"] .brand { letter-spacing: 1px; }
+[dir="rtl"] .workflow { text-align: right; }
+[dir="rtl"] .search-box svg { left: auto; right: 12px; }
+[dir="rtl"] .search-box input { padding-left: 12px; padding-right: 35px; }
+[dir="rtl"] .library-tools > .path { margin-left: 0; margin-right: auto; }
+[dir="rtl"] .btn .end-icon { margin-left: 0; margin-right: auto; }
+[dir="rtl"] .workflow-tag svg, [dir="rtl"] use[href="#i-arrow"] { transform: scaleX(-1); transform-origin: center; }
+.path, .filename-input, #sourceName, #installName, .avatar-info strong, .avatar-info small, .brand { direction: ltr; unicode-bidi: isolate; }
+.topbar { flex-wrap: wrap; padding-block: 15px; gap: 16px; }
 .stop-service {
   display: inline-flex;
   align-items: center;
@@ -1440,6 +1489,14 @@ input[type="range"] {
   }
 }
 @media (max-width: 600px) {
+  .service-controls { flex-wrap: wrap; justify-content: flex-end; max-width: 55%; }
+  #languageSelect { width: 100%; max-width: 180px; }
+  .connection { max-width: calc(100% - 40px); }
+  #connectionText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .library-heading-actions { justify-content: flex-start; }
+  #libraryView .page-heading { flex-direction: column; gap: 18px; }
+  .library-heading-actions .btn { font-size: 11px; padding: 10px; }
+  .avatar-actions { flex-wrap: wrap; }
   .stop-label {
     display: none;
   }
