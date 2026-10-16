@@ -16,7 +16,7 @@ Download the latest version from the [Releases Page](https://github.com/h5d7r/XA
 | --- | --- |
 | `XAVATAR.elf` | Run the avatar studio directly. |
 | `XAVATAR-installer.elf` | Install the payload to `/data/payloads/` and start the studio. |
-| `XAVATAR-1.0.2.zip` | Both payloads, sender, logo, and README. |
+| `XAVATAR-1.0.3.zip` | Both payloads, sender, logo, and README. |
 
 Only one ELF needs to be loaded. No HTML, CSS, or JavaScript files need to be transferred to the console.
 
@@ -62,7 +62,7 @@ The installed ELF can be selected from your payload launcher for later sessions.
 Notifications use the XAVATAR logo and include the developer/version line:
 
 ```text
-Haider A.H (c) 1.0.2V
+Haider A.H (c) 1.0.3V
 ```
 
 The logo is bundled in both ELFs and exported automatically to `/user/data/XAVATAR/notification.png`, a location intended for ShellUI image access. No manual image transfer is needed. If icon preparation or notification submission fails, the payload falls back to the system icon while keeping the credit line.
@@ -79,7 +79,7 @@ Open **`http://YOUR-PS4-IP:4002`** on a phone or computer connected to the same 
 
 Select an image, adjust its square crop, choose a PS4 user when installing, and complete the operation. The **Library** displays saved avatars and lets you install them for any available user.
 
-### Library files (patch-1)
+### Library files
 
 - **Upload XAVATAR** adds a `.xavatar` file from your phone or computer to `/data/AVATARS`. Choose its library name before uploading. Files up to 4 MiB are checked for valid avatar images and textures; existing filenames are never overwritten.
 - **Download** saves an exact copy of a library file to your phone or computer.
@@ -91,7 +91,7 @@ The language menu defaults to **Automatic (PS4)**. The payload reads the console
 
 The 11 interface languages are **English, Arabic, French, Spanish, German, Italian, Portuguese, Russian, Turkish, Japanese and Chinese**. Arabic uses a right-to-left layout. Select a language manually at any time, or return to **Automatic (PS4)**. The preference is saved in that browser for the console's address and automatic mode checks the console language again on each status refresh. System notifications remain in English.
 
-The `patch-1` branch contains these additions. Its successful GitHub Actions runs include downloadable build artifacts; the main release remains v1.0.2 until a new release is published.
+These features are included in **v1.0.3**, available from the [Releases Page](https://github.com/h5d7r/XAVATAR/releases/latest).
 
 Sign out and back in after installation to refresh the console's avatar. Existing profile metadata is preserved, and replaced images are backed up automatically.
 

@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #define XA_PORT 4002
-#define XA_VERSION "1.0.2"
+#define XA_VERSION "1.0.3"
 #define XA_CREDIT "Haider A.H (c) " XA_VERSION "V"
 #define XA_MAX_PACKAGE (4 * 1024 * 1024)
 #define XA_MAX_PNG (2 * 1024 * 1024)
