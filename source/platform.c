@@ -104,8 +104,41 @@ int sceUserServiceInitialize(void *);
 int sceUserServiceGetUserName(int32_t, char *, size_t);
 int sceUserServiceTerminate(void);
 int sceKernelSendNotificationRequest(int, void *, size_t, int);
+int32_t sceSystemServiceParamGetInt(int32_t, int32_t *);
 static int user_service_owned;
 #endif
+
+const char *xa_language(int *system_id) {
+  int32_t value = -1;
+#ifdef XAVATAR_HOST
+  /* Deterministic console-language fixture; never use the host/browser locale. */
+  const char *setting = getenv("XAVATAR_TEST_LANGUAGE");
+  if (setting) {
+    char *end;
+    long parsed = strtol(setting, &end, 10);
+    if (*setting && !*end && parsed >= 0 && parsed <= 29)
+      value = (int32_t)parsed;
+  }
+#else
+  /* OpenOrbis SystemService: parameter 1 is the PS4 system language. */
+  if (sceSystemServiceParamGetInt(1, &value) < 0)
+    value = -1;
+#endif
+  *system_id = value;
+  switch (value) {
+  case 0: return "ja";
+  case 2: case 22: return "fr";
+  case 3: case 20: return "es";
+  case 4: return "de";
+  case 5: return "it";
+  case 7: case 17: return "pt";
+  case 8: return "ru";
+  case 10: case 11: return "zh";
+  case 19: return "tr";
+  case 21: return "ar";
+  default: return "en";
+  }
+}
 
 int xa_platform_init(void) {
 #ifndef XAVATAR_HOST

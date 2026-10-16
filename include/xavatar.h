@@ -39,6 +39,7 @@ void xa_notify(const char *message);
 void xa_log(const char *message);
 int xa_platform_init(void);
 void xa_platform_end(void);
+const char *xa_language(int *system_id);
 
 void avatar_free(Avatar *avatar);
 int avatar_create(const void *png, size_t len, Blob *zip, char *error,

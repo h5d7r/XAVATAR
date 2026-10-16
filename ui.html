@@ -7,6 +7,7 @@
     <title>XAVATAR · Make it yours</title>
     <link rel="stylesheet" href="/styles.css" />
     <link rel="icon" type="image/png" href="/logo.png" />
+    <script src="/i18n.js" defer></script>
     <script src="/app.js" defer></script>
   </head>
   <body>
@@ -64,6 +65,8 @@
         </button>
       </nav>
       <div class="service-controls">
+        <label class="sr-only" for="languageSelect">Language</label>
+        <select id="languageSelect" aria-label="Language"></select>
         <button class="connection" id="connection" title="Check connection">
           <span class="dot"></span><span id="connectionText">Connecting…</span
           ><span class="port">:4002</span>
@@ -279,9 +282,14 @@
             <h1 id="libraryTitle">Your avatar <span>library.</span></h1>
             <p class="intro">Saved looks, ready for a new home.</p>
           </div>
+          <div class="library-heading-actions">
+          <button class="btn" id="uploadAvatar">
+            <svg><use href="#i-upload" /></svg>Upload XAVATAR
+          </button>
           <button class="btn primary" id="newAvatar">
             <svg><use href="#i-spark" /></svg>Create an avatar
           </button>
+          </div>
         </div>
         <div class="library-tools">
           <div class="search-box">
@@ -430,6 +438,45 @@
           ><button class="btn primary" id="installButton" disabled>
             Install avatar <svg><use href="#i-arrow" /></svg>
           </button>
+        </div>
+      </section>
+    </div>
+    <div class="modal-overlay" id="uploadModal" hidden>
+      <section class="modal install-modal" role="dialog" aria-modal="true" aria-labelledby="uploadTitle">
+        <div class="modal-header">
+          <h2 id="uploadTitle">Add an avatar to your library</h2>
+          <button class="close" data-close="uploadModal" aria-label="Close upload dialog">×</button>
+        </div>
+        <div class="package-body">
+          <label class="sr-only" for="packageInput">Choose a .xavatar file</label>
+          <button class="btn" id="choosePackage">Choose a .xavatar file</button>
+          <input id="packageInput" type="file" accept=".xavatar" hidden />
+          <span id="packageSelected" dir="auto"></span>
+          <small>Up to 4 MB. Packages are checked before saving.</small>
+          <label for="packageName">Avatar name</label>
+          <div class="filename-input"><input id="packageName" maxlength="92" autocomplete="off" placeholder="my-new-avatar" /><span>.xavatar</span></div>
+          <small>Existing files are never overwritten. Choose another name if needed.</small>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" data-close="uploadModal">Cancel</button>
+          <button class="btn primary" id="uploadButton" disabled>Upload to library</button>
+        </div>
+      </section>
+    </div>
+    <div class="modal-overlay" id="deleteModal" hidden>
+      <section class="modal install-modal" role="dialog" aria-modal="true" aria-labelledby="deleteTitle">
+        <div class="modal-header">
+          <h2 id="deleteTitle">Delete this avatar?</h2>
+          <button class="close" data-close="deleteModal" aria-label="Close delete dialog">×</button>
+        </div>
+        <div class="package-body">
+          <strong id="deleteName" dir="auto"></strong>
+          <p>This removes the file from the library. Installed profile avatars stay unchanged.</p>
+          <p>Download a copy first if you want to keep it.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" data-close="deleteModal">Cancel</button>
+          <button class="btn danger" id="deleteButton">Delete avatar</button>
         </div>
       </section>
     </div>
