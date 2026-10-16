@@ -1,0 +1,45 @@
+name: Build XAVATAR
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y clang-18 lld-18 make python3 unzip curl
+      - name: Build host targets
+        run: make HOST=1
+      - name: Install pinned PS4 SDK
+        run: |
+          curl -fL https://github.com/ps4-payload-dev/sdk/releases/download/v0.9/ps4-payload-sdk.zip -o /tmp/sdk.zip
+          echo '3190e88255a72161e5ce2f22a8ae8f638a2c5a9d1ff1e0209ed692d36b4d9ec5  /tmp/sdk.zip' | sha256sum -c -
+          unzip -q /tmp/sdk.zip -d "$RUNNER_TEMP"
+          echo "PS4_PAYLOAD_SDK=$RUNNER_TEMP/ps4-payload-sdk" >> "$GITHUB_ENV"
+      - name: Build and package
+        run: make package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: XAVATAR
+          path: |
+            build/XAVATAR.elf
+            build/XAVATAR-installer.elf
+            dist/*.zip
+            dist/SHA256SUMS.txt
+          if-no-files-found: error
+      - name: Publish tagged release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "$GITHUB_REF_NAME"
+          build/XAVATAR.elf build/XAVATAR-installer.elf
+          dist/*.zip dist/SHA256SUMS.txt
+          --title "XAVATAR $GITHUB_REF_NAME"
+          --notes-file .github/RELEASE_NOTES.md

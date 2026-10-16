@@ -1,0 +1,14 @@
+.references/
+.tools/
+build/
+dist/
+test-output/
+node_modules/
+__pycache__/
+*.o
+*.elf
+*.bin
+*.zip
+.venv/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,31 @@
+name: Bug report
+description: Report a problem with XAVATAR.
+body:
+  - type: input
+    id: firmware
+    attributes:
+      label: PS4 firmware and payload loader
+      placeholder: Firmware version, loader name and version
+    validations:
+      required: true
+  - type: dropdown
+    id: payload
+    attributes:
+      label: Payload
+      options:
+        - XAVATAR.elf
+        - XAVATAR-installer.elf
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include steps to reproduce, expected behavior, and the error message.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Share relevant errors without account information or private data.

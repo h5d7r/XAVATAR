@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#06060e" />
+    <title>XAVATAR · Make it yours</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <svg class="symbols" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <symbol id="i-spark" viewBox="0 0 24 24">
+        <path d="m12 3 2.8 6.2L21 12l-6.2 2.8L12 21l-2.8-6.2L3 12l6.2-2.8Z" />
+      </symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="7" height="7" rx="2" />
+        <rect x="14" y="3" width="7" height="7" rx="2" />
+        <rect x="3" y="14" width="7" height="7" rx="2" />
+        <rect x="14" y="14" width="7" height="7" rx="2" />
+      </symbol>
+      <symbol id="i-upload" viewBox="0 0 24 24">
+        <path
+          d="M12 16V3m-5 5 5-5 5 5M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"
+        />
+      </symbol>
+      <symbol id="i-save" viewBox="0 0 24 24">
+        <path d="M4 3h13l4 4v14H3V3Zm3 0v7h10V3M7 21v-7h10v7" />
+      </symbol>
+      <symbol id="i-arrow" viewBox="0 0 24 24">
+        <path d="M4 12h16m-6-6 6 6-6 6" />
+      </symbol>
+      <symbol id="i-user" viewBox="0 0 24 24">
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21v-2a8 8 0 0 1 16 0v2" />
+      </symbol>
+      <symbol id="i-image" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="3" />
+        <circle cx="8" cy="8" r="1" />
+        <path d="m3 17 5-5 4 4 4-6 5 7" />
+      </symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24">
+        <path d="M20 10a8 8 0 1 0-2 8m2-14v6h-6" />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 24 24">
+        <path d="m5 12 4 4L19 6" />
+      </symbol>
+      <symbol id="i-power" viewBox="0 0 24 24">
+        <path d="M12 2v10M6.3 5.8a9 9 0 1 0 11.4 0" />
+      </symbol>
+    </svg>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="XAVATAR home"
+        ><span class="brand-mark"><img src="/logo.png" alt="" /></span
+        ><span>XAVATAR<small>PS4 AVATAR STUDIO</small></span></a
+      >
+      <nav class="tabs" aria-label="Main navigation">
+        <button class="tab active" data-view="create" aria-current="page">
+          <svg><use href="#i-spark" /></svg>Create</button
+        ><button class="tab" data-view="library">
+          <svg><use href="#i-grid" /></svg>Library
+          <span id="libraryCount">0</span>
+        </button>
+      </nav>
+      <div class="service-controls">
+        <button class="connection" id="connection" title="Check connection">
+          <span class="dot"></span><span id="connectionText">Connecting…</span
+          ><span class="port">:4002</span>
+        </button>
+        <button
+          class="stop-service"
+          id="stopService"
+          aria-label="Stop service"
+          title="Close port 4002 and stop XAVATAR"
+          disabled
+        >
+          <svg><use href="#i-power" /></svg
+          ><span class="stop-label">Stop service</span>
+        </button>
+      </div>
+    </header>
+    <div class="connection-banner" id="connectionBanner" hidden>
+      <span id="connectionMessage"
+        >Cannot reach the payload. Check that XAVATAR is running on your
+        PS4.</span
+      >
+      <button id="reconnect">Reconnect</button>
+    </div>
+    <main>
+      <section id="createView" aria-labelledby="createTitle">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow"><span></span> YOUR PROFILE. YOUR IDENTITY.</p>
+            <h1 id="createTitle">Make it <span>yours.</span></h1>
+            <p class="intro">Turn any image into your next PS4 avatar.</p>
+          </div>
+          <div class="edition">
+            <span>LOCAL CREATION</span><strong>One image. Every size.</strong
+            ><small>Built for your console, right in your browser.</small>
+          </div>
+        </div>
+        <div class="section-label">
+          <span>01</span>
+          <h2>Choose your workflow</h2>
+        </div>
+        <div class="workflows" role="group" aria-label="Avatar workflow">
+          <button class="workflow" data-mode="install" aria-pressed="false">
+            <span class="workflow-top"
+              ><span class="icon-tile"
+                ><svg><use href="#i-upload" /></svg></span
+              ><span class="choice-dot"></span></span
+            ><strong>Install without saving</strong>
+            <p>
+              Create and apply an avatar directly. <br />No package left in your
+              library.
+            </p>
+            <span class="workflow-tag"
+              >JUST FOR NOW <svg><use href="#i-arrow" /></svg
+            ></span>
+          </button>
+          <button class="workflow" data-mode="save" aria-pressed="false">
+            <span class="workflow-top"
+              ><span class="icon-tile"
+                ><svg><use href="#i-save" /></svg></span
+              ><span class="choice-dot"></span></span
+            ><strong>Create XAVATAR file</strong>
+            <p>
+              Save a reusable avatar package. <br />Install it whenever you
+              want.
+            </p>
+            <span class="workflow-tag"
+              >BUILD YOUR COLLECTION <svg><use href="#i-arrow" /></svg
+            ></span>
+          </button>
+          <button
+            class="workflow selected"
+            data-mode="both"
+            aria-pressed="true"
+          >
+            <span class="workflow-top"
+              ><span class="icon-tile"
+                ><svg><use href="#i-spark" /></svg></span
+              ><span class="recommended">ALL IN ONE</span
+              ><span class="choice-dot"></span></span
+            ><strong>Create &amp; install</strong>
+            <p>
+              Apply your new look and keep a copy. <br />The best of both
+              worlds.
+            </p>
+            <span class="workflow-tag"
+              >READY NOW. SAVED FOR LATER. <svg><use href="#i-arrow" /></svg
+            ></span>
+          </button>
+        </div>
+        <div class="section-label editor-label">
+          <span>02</span>
+          <h2>Create your avatar</h2>
+          <span class="micro" id="workflowHint">INSTALL + SAVE</span>
+        </div>
+        <div class="studio">
+          <section class="panel image-panel" aria-labelledby="imageTitle">
+            <div class="panel-header">
+              <h3 id="imageTitle">
+                <svg><use href="#i-image" /></svg>Your image
+              </h3>
+              <span class="pill">SQUARE CROP</span>
+            </div>
+            <div id="dropzone" class="dropzone">
+              <div class="drop-inner">
+                <div class="upload-orbit">
+                  <svg><use href="#i-upload" /></svg>
+                </div>
+                <h3>Start with an image</h3>
+                <p>Drop it here, or choose one from your device.</p>
+                <button class="btn primary" id="chooseImage">
+                  <svg><use href="#i-image" /></svg>Choose image</button
+                ><small>PNG, JPG, WebP or GIF · up to 20 MB</small>
+              </div>
+            </div>
+            <div class="image-workspace" id="imageWorkspace" hidden>
+              <div class="image-mat">
+                <img id="cropPreview" alt="Your cropped avatar" /><span
+                  class="crop-dimension"
+                  >440 × 440</span
+                >
+              </div>
+              <div class="image-toolbar">
+                <span id="sourceName">Your image</span
+                ><button class="btn small" id="editCrop">Edit crop</button
+                ><button class="btn small" id="replaceImage">Replace</button>
+              </div>
+            </div>
+            <input
+              id="imageInput"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              hidden
+            />
+            <div class="image-footnote">
+              <svg><use href="#i-check" /></svg>All four PS4 texture sizes are
+              created automatically.
+            </div>
+          </section>
+          <section class="panel settings-panel" aria-labelledby="finishTitle">
+            <div class="panel-header">
+              <h3 id="finishTitle">The finishing touches</h3>
+              <span class="step-count">ALMOST YOURS</span>
+            </div>
+            <div class="settings-body">
+              <div class="profile-preview">
+                <div class="avatar-ring">
+                  <img
+                    id="profilePreview"
+                    alt="Profile avatar preview"
+                    hidden
+                  /><svg id="profilePlaceholder"><use href="#i-user" /></svg>
+                </div>
+                <div>
+                  <span class="micro">PROFILE PREVIEW</span
+                  ><strong id="previewName">Your next identity</strong
+                  ><small>Made by you. Ready for PS4.</small>
+                </div>
+              </div>
+              <div class="field" id="userField">
+                <div class="label-row">
+                  <label for="userSelect">Install for</label
+                  ><button
+                    id="refreshUsers"
+                    class="text-btn"
+                    title="Reload usernames"
+                  >
+                    Refresh
+                  </button>
+                </div>
+                <select id="userSelect">
+                  <option value="">Loading usernames…</option></select
+                ><small id="userHelp">Select a user on your PS4.</small>
+              </div>
+              <div class="field" id="filenameField">
+                <label for="filename">Avatar name</label>
+                <div class="filename-input">
+                  <input
+                    id="filename"
+                    maxlength="92"
+                    placeholder="my-new-avatar"
+                    autocomplete="off"
+                  /><span>.xavatar</span>
+                </div>
+                <small>Saved to <span class="path">/data/AVATARS</span></small>
+              </div>
+              <div class="output-details">
+                <span>PACKAGE OUTPUT</span>
+                <div>
+                  <b>440</b><i>·</i><b>260</b><i>·</i><b>128</b><i>·</i><b>64</b
+                  ><small>PX</small><span class="pill">DXT5</span>
+                </div>
+              </div>
+              <button
+                id="createButton"
+                class="btn primary create-button"
+                disabled
+              >
+                <svg><use href="#i-spark" /></svg
+                ><span>Create &amp; install</span
+                ><svg class="end-icon"><use href="#i-arrow" /></svg>
+              </button>
+              <p class="action-hint" id="actionHint">
+                Choose an image to get started.
+              </p>
+            </div>
+          </section>
+        </div>
+      </section>
+      <section id="libraryView" aria-labelledby="libraryTitle" hidden>
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow"><span></span> A COLLECTION OF YOU</p>
+            <h1 id="libraryTitle">Your avatar <span>library.</span></h1>
+            <p class="intro">Saved looks, ready for a new home.</p>
+          </div>
+          <button class="btn primary" id="newAvatar">
+            <svg><use href="#i-spark" /></svg>Create an avatar
+          </button>
+        </div>
+        <div class="library-tools">
+          <div class="search-box">
+            <svg><use href="#i-grid" /></svg
+            ><input
+              type="search"
+              id="search"
+              placeholder="Find an avatar…"
+              aria-label="Search avatar library"
+            />
+          </div>
+          <span class="path">/data/AVATARS</span
+          ><button class="btn small" id="refreshLibrary">
+            <svg><use href="#i-refresh" /></svg>Refresh
+          </button>
+        </div>
+        <div class="library-summary">
+          <span id="librarySummary">Loading avatars…</span
+          ><span>YOUR COLLECTION</span>
+        </div>
+        <div id="libraryGrid" class="library-grid"></div>
+        <div id="libraryEmpty" class="empty" hidden>
+          <span class="empty-icon"
+            ><svg><use href="#i-grid" /></svg
+          ></span>
+          <h2>Your next look starts here.</h2>
+          <p>Create and save your first avatar to start your collection.</p>
+          <button class="btn primary" id="emptyCreate">
+            Create an avatar <svg><use href="#i-arrow" /></svg>
+          </button>
+        </div>
+        <p class="library-error" id="libraryError" role="status" hidden></p>
+      </section>
+    </main>
+    <footer>
+      <span><span class="mini-mark">X</span> XAVATAR <b>1.0</b></span
+      ><span
+        >MADE FOR YOUR PS4<span class="footer-dot">·</span> MAKE IT
+        PERSONAL.</span
+      ><span id="footerStatus">Waiting for payload</span>
+    </footer>
+    <div class="modal-overlay" id="cropModal" hidden>
+      <section
+        class="modal crop-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cropTitle"
+      >
+        <div class="modal-header">
+          <div>
+            <p class="eyebrow">FRAME YOUR IDENTITY</p>
+            <h2 id="cropTitle">Find your perfect crop.</h2>
+          </div>
+          <button
+            class="close"
+            data-close="cropModal"
+            aria-label="Close crop editor"
+          >
+            ×
+          </button>
+        </div>
+        <div class="crop-body">
+          <div class="crop-stage">
+            <canvas
+              id="cropCanvas"
+              width="440"
+              height="440"
+              aria-label="Square crop preview. Drag to reposition, or use the position sliders."
+            ></canvas>
+            <div class="crop-guides" aria-hidden="true"></div>
+            <span class="crop-corner tl"></span
+            ><span class="crop-corner br"></span>
+          </div>
+          <p class="crop-help">Drag to reposition. Zoom to get closer.</p>
+          <div class="slider-row">
+            <label for="zoom">Zoom</label
+            ><input
+              id="zoom"
+              type="range"
+              min="1"
+              max="4"
+              step="0.01"
+              value="1"
+            /><output id="zoomValue">1.0×</output>
+          </div>
+          <div class="position-controls">
+            <label
+              >Horizontal<input
+                id="cropX"
+                type="range"
+                min="-100"
+                max="100"
+                value="0" /></label
+            ><label
+              >Vertical<input
+                id="cropY"
+                type="range"
+                min="-100"
+                max="100"
+                value="0"
+            /></label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="resetCrop" class="text-btn">Reset crop</button
+          ><span class="spacer"></span
+          ><button class="btn" data-close="cropModal">Cancel</button
+          ><button class="btn primary" id="applyCrop">
+            <svg><use href="#i-check" /></svg>Use this crop
+          </button>
+        </div>
+      </section>
+    </div>
+    <div class="modal-overlay" id="installModal" hidden>
+      <section
+        class="modal install-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="installTitle"
+      >
+        <div class="modal-header">
+          <h2 id="installTitle">Give this avatar a home.</h2>
+          <button
+            class="close"
+            data-close="installModal"
+            aria-label="Close install dialog"
+          >
+            ×
+          </button>
+        </div>
+        <div class="install-body">
+          <img id="installPreview" alt="Selected library avatar" /><strong
+            id="installName"
+          ></strong>
+          <p>Select the user you want to install this avatar for.</p>
+          <label class="sr-only" for="installUser">PS4 user</label
+          ><select id="installUser">
+            <option value="">Select a user</option></select
+          ><small
+            >Sign out and back in after installation to see your new
+            avatar.</small
+          >
+        </div>
+        <div class="modal-footer">
+          <button class="btn" data-close="installModal">Cancel</button
+          ><button class="btn primary" id="installButton" disabled>
+            Install avatar <svg><use href="#i-arrow" /></svg>
+          </button>
+        </div>
+      </section>
+    </div>
+    <div
+      id="busyOverlay"
+      class="busy-overlay"
+      role="status"
+      aria-live="polite"
+      hidden
+    >
+      <div class="busy-card">
+        <span class="spinner"></span
+        ><strong id="busyText">Creating your avatar…</strong
+        ><small id="busyDetail">Keep this page open.</small
+        ><progress id="uploadProgress" max="100" hidden></progress>
+      </div>
+    </div>
+    <div
+      id="toasts"
+      class="toasts"
+      aria-live="polite"
+      aria-atomic="false"
+    ></div>
+  </body>
+</html>
