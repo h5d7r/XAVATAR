@@ -16,7 +16,6 @@ Download the latest version from the [Releases Page](https://github.com/h5d7r/XA
 | --- | --- |
 | `XAVATAR.elf` | Run the avatar studio directly. |
 | `XAVATAR-installer.elf` | Install the payload to `/data/payloads/` and start the studio. |
-| `XAVATAR-1.1.0.zip` | Both payloads, sender, logo, and README. |
 
 Only one ELF needs to be loaded. No HTML, CSS, or JavaScript files need to be transferred to the console.
 
