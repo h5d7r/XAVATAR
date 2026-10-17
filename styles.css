@@ -609,6 +609,47 @@ h1 > span {
   color: #5d6b83;
   margin-top: 17px;
 }
+.url-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 340px;
+  margin: 20px auto 14px;
+  color: #5d6b83;
+  font-size: 8px;
+  letter-spacing: 1.4px;
+  text-align: center;
+}
+.url-divider::before,
+.url-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #202b40;
+}
+.url-input {
+  display: flex;
+  gap: 8px;
+  max-width: 340px;
+  margin: 0 auto;
+}
+.url-input input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #24314a;
+  border-radius: 7px;
+  background: #080e1a;
+  color: #b8c9e1;
+  font-size: 11px;
+  min-height: 40px;
+  padding: 0 12px;
+}
+.url-input input::placeholder {
+  color: #4a5c77;
+}
+.url-input input:focus {
+  border-color: var(--ac);
+}
 .btn {
   display: inline-flex;
   align-items: center;

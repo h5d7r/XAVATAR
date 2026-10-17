@@ -80,6 +80,8 @@ static void response_headers(int fd, int code, const char *type, const void *bod
                        : code == 404 ? "Not Found"
                        : code == 409 ? "Conflict"
                        : code == 413 ? "Payload Too Large"
+                       : code == 415 ? "Unsupported Media Type"
+                       : code == 502 ? "Bad Gateway"
                                      : "Error";
   int n = snprintf(
       header, sizeof(header),
@@ -87,8 +89,8 @@ static void response_headers(int fd, int code, const char *type, const void *bod
       "%zu\r\nConnection: close\r\n"
       "%sCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\n"
       "Content-Security-Policy: default-src 'self'; img-src 'self' blob: "
-      "data:; style-src 'self'; script-src 'self'; connect-src 'self'; "
-      "object-src 'none'; base-uri 'none'; frame-ancestors 'none'\r\n\r\n",
+      "data: https: http:; style-src 'self'; script-src 'self'; connect-src "
+      "'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'\r\n\r\n",
       code, reason, type, len, extra);
   if (n > 0 && (size_t)n < sizeof(header) && !send_all(fd, header, (size_t)n))
     send_all(fd, body, len);
@@ -282,6 +284,48 @@ static int query(const char *target, const char *key, char *out, size_t cap) {
   return found;
 }
 
+/* Identifies the common avatar source formats by their magic bytes. */
+static const char *image_type(const unsigned char *data, size_t size) {
+  if (size >= 8 && !memcmp(data, "\211PNG\r\n\032\n", 8))
+    return "image/png";
+  if (size >= 3 && data[0] == 0xFF && data[1] == 0xD8 && data[2] == 0xFF)
+    return "image/jpeg";
+  if (size >= 12 && !memcmp(data, "RIFF", 4) && !memcmp(data + 8, "WEBP", 4))
+    return "image/webp";
+  if (size >= 6 && (!memcmp(data, "GIF87a", 6) || !memcmp(data, "GIF89a", 6)))
+    return "image/gif";
+  return NULL;
+}
+
+/* The browser cannot read cross-origin images, so the console fetches the link
+   itself and returns the bytes. Same-origin keeps the crop canvas untainted. */
+static void fetch_link(int fd, Request *r) {
+  char url[2048], error[512];
+  if (query(r->target, "url", url, sizeof(url)) != 1) {
+    message(fd, 400, "Provide an image link.");
+    return;
+  }
+  Blob image = {0};
+  if (xa_fetch(url, &image, error, sizeof(error))) {
+    message(fd, 502, error);
+    return;
+  }
+  const char *type = image_type(image.data, image.size);
+  if (!type) {
+    free(image.data);
+    message(fd, 415, "That link is not a PNG, JPG or WebP image.");
+    return;
+  }
+  if (!strcmp(type, "image/gif")) {
+    free(image.data);
+    message(fd, 415,
+            "GIF links are not supported. Use a PNG, JPG or WebP link.");
+    return;
+  }
+  response(fd, 200, type, image.data, image.size);
+  free(image.data);
+}
+
 static void serve_users(int fd) {
   User users[XA_MAX_USERS];
   char error[512], body[10000];
@@ -465,6 +509,22 @@ static void delete_package(int fd, Request *r) {
   message(fd, 200, "Avatar deleted from your library.");
 }
 
+static const Blob *avatar_png_entry(const Avatar *a) {
+  for (int i = 0; i < a->count; i++)
+    if (!strcmp(a->entries[i].name, "avatar.png"))
+      return &a->entries[i].blob;
+  return NULL;
+}
+
+/* Shows the avatar itself in the system notification when available. */
+static void notify_avatar_result(const char *message, const Avatar *a) {
+  const Blob *png = avatar_png_entry(a);
+  if (png)
+    xa_notify_avatar(message, png->data, png->size);
+  else
+    xa_notify(message);
+}
+
 static void create_avatar(int fd, Request *r) {
   char mode[16], name[128], error[2000], saved[1200] = "";
   uint32_t uid = 0;
@@ -522,7 +582,7 @@ static void create_avatar(int fd, Request *r) {
                       : "Avatar installed without saving a package. Sign out "
                         "and back in to refresh it.")
               : "XAVATAR file saved to /data/AVATARS.";
-  xa_notify(success);
+  notify_avatar_result(success, &avatar);
   message(fd, 201, success);
 done:
   avatar_free(&avatar);
@@ -558,6 +618,10 @@ static void handle(int fd, Request *r) {
     }
     if (!strcmp(path, "/api/avatars")) {
       serve_library(fd);
+      return;
+    }
+    if (!strcmp(path, "/api/fetch")) {
+      fetch_link(fd, r);
       return;
     }
     if (!strcmp(path, "/api/download")) {
@@ -644,7 +708,7 @@ static void handle(int fd, Request *r) {
       if (avatar_install(&a, uid, error, sizeof(error)))
         message(fd, 500, error);
       else {
-        xa_notify("XAVATAR avatar installed");
+        notify_avatar_result("XAVATAR avatar installed", &a);
         message(fd, 200, error);
       }
       avatar_free(&a);

@@ -178,7 +178,22 @@
                 <p>Drop it here, or choose one from your device.</p>
                 <button class="btn primary" id="chooseImage">
                   <svg><use href="#i-image" /></svg>Choose image</button
-                ><small>PNG, JPG, WebP or GIF · up to 20 MB</small>
+                >
+                <div class="url-divider"><span>Or use an image link</span></div>
+                <div class="url-input">
+                  <input
+                    id="imageUrl"
+                    type="url"
+                    inputmode="url"
+                    autocomplete="off"
+                    spellcheck="false"
+                    placeholder="https://example.com/avatar.png"
+                    aria-label="Image link"
+                  /><button class="btn" id="loadFromUrl">
+                    <svg><use href="#i-image" /></svg>Load
+                  </button>
+                </div>
+                <small>PNG, JPG, WebP or GIF · up to 20 MB</small>
               </div>
             </div>
             <div class="image-workspace" id="imageWorkspace" hidden>
@@ -191,6 +206,7 @@
               <div class="image-toolbar">
                 <span id="sourceName">Your image</span
                 ><button class="btn small" id="editCrop">Edit crop</button
+                ><button class="btn small" id="linkImage">From link</button
                 ><button class="btn small" id="replaceImage">Replace</button>
               </div>
             </div>
@@ -325,7 +341,7 @@
       </section>
     </main>
     <footer>
-      <span><span class="mini-mark">X</span> XAVATAR <b>1.0.3</b></span
+      <span><span class="mini-mark">X</span> XAVATAR <b>1.1.0</b></span
       ><span
         >MADE FOR YOUR PS4<span class="footer-dot">·</span> MAKE IT
         PERSONAL.</span

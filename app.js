@@ -1,4 +1,5 @@
-/* XAVATAR has no CDN dependencies. Images stay between this browser and the PS4. */
+/* XAVATAR has no CDN dependencies. Uploaded images stay between this browser
+   and the PS4; linked images are fetched by the browser from their host. */
 "use strict";
 (function () {
   var $ = function (id) {
@@ -484,6 +485,25 @@
     state.y = 0;
     drawCrop();
   }
+  function openCropFromImage(image, sourceUrl, filename) {
+    if (image.naturalWidth * image.naturalHeight > 32000000) {
+      if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+      busy("");
+      toast(
+        t("This image is too large. Choose an image below 32 megapixels."),
+        true,
+      );
+      return false;
+    }
+    snapshotCrop();
+    state.source = image;
+    state.sourceUrl = sourceUrl;
+    state.filename = filename;
+    busy("");
+    resetCrop();
+    openModal("cropModal");
+    return true;
+  }
   function loadImage(file) {
     if (!file || state.busy) return;
     if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type)) {
@@ -498,22 +518,7 @@
     var url = URL.createObjectURL(file),
       image = new Image();
     image.onload = function () {
-      if (image.naturalWidth * image.naturalHeight > 32000000) {
-        URL.revokeObjectURL(url);
-        busy("");
-        toast(
-          t("This image is too large. Choose an image below 32 megapixels."),
-          true,
-        );
-        return;
-      }
-      snapshotCrop();
-      state.source = image;
-      state.sourceUrl = url;
-      state.filename = file.name;
-      busy("");
-      resetCrop();
-      openModal("cropModal");
+      openCropFromImage(image, url, file.name);
     };
     image.onerror = function () {
       URL.revokeObjectURL(url);
@@ -521,6 +526,89 @@
       toast(t("This image could not be opened. Try another image."), true);
     };
     image.src = url;
+  }
+  function validImageUrl(value) {
+    try {
+      var url = new URL((value || "").trim());
+      return url.protocol === "http:" || url.protocol === "https:" ? url : null;
+    } catch (_) {
+      return null;
+    }
+  }
+  function linkedName(url) {
+    var name = "";
+    try {
+      var path = url.pathname;
+      name = decodeURIComponent(path.substring(path.lastIndexOf("/") + 1));
+    } catch (_) {}
+    return name || "linked-image";
+  }
+  function loadImageFromUrl(value) {
+    if (state.busy) return;
+    var url = validImageUrl(value);
+    if (!url) {
+      toast(
+        t("Enter a valid image link starting with http:// or https://."),
+        true,
+      );
+      return;
+    }
+    if (/\.gif$/i.test(url.pathname)) {
+      toast(
+        t("GIF links are not supported. Use a PNG, JPG or WebP link."),
+        true,
+      );
+      return;
+    }
+    busy(t("Loading the linked image…"), t("Preparing the crop editor."));
+    var image = new Image();
+    image.crossOrigin = "anonymous";
+    image.onload = function () {
+      openCropFromImage(image, "", linkedName(url));
+    };
+    image.onerror = function () {
+      loadImageThroughPayload(url);
+    };
+    image.src = url.href;
+  }
+  function linkFailure(serverMessage) {
+    busy("");
+    toast(
+      serverMessage ||
+        t(
+          "That link could not be loaded. The site may block it. Download the image and choose the file instead.",
+        ),
+      true,
+    );
+  }
+  function loadImageThroughPayload(url) {
+    fetch("/api/fetch?url=" + encodeURIComponent(url.href))
+      .then(function (response) {
+        if (response.ok) return response.blob();
+        return response.json().then(
+          function (data) {
+            throw new Error(data && data.message ? data.message : "");
+          },
+          function () {
+            throw new Error("");
+          },
+        );
+      })
+      .then(function (blob) {
+        var objectUrl = URL.createObjectURL(blob),
+          image = new Image();
+        image.onload = function () {
+          openCropFromImage(image, objectUrl, linkedName(url));
+        };
+        image.onerror = function () {
+          URL.revokeObjectURL(objectUrl);
+          linkFailure("");
+        };
+        image.src = objectUrl;
+      })
+      .catch(function (failure) {
+        linkFailure(failure && failure.message ? failure.message : "");
+      });
   }
 
   var drag = null;
@@ -767,6 +855,20 @@
   $("imageInput").onchange = function () {
     loadImage(this.files[0]);
     this.value = "";
+  };
+  $("loadFromUrl").onclick = function () {
+    loadImageFromUrl($("imageUrl").value);
+  };
+  $("imageUrl").onkeydown = function (event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      loadImageFromUrl(this.value);
+    }
+  };
+  $("linkImage").onclick = function () {
+    $("dropzone").hidden = false;
+    $("imageWorkspace").hidden = true;
+    $("imageUrl").focus();
   };
   $("editCrop").onclick = function () {
     snapshotCrop();

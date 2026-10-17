@@ -16,7 +16,7 @@ Download the latest version from the [Releases Page](https://github.com/h5d7r/XA
 | --- | --- |
 | `XAVATAR.elf` | Run the avatar studio directly. |
 | `XAVATAR-installer.elf` | Install the payload to `/data/payloads/` and start the studio. |
-| `XAVATAR-1.0.3.zip` | Both payloads, sender, logo, and README. |
+| `XAVATAR-1.1.0.zip` | Both payloads, sender, logo, and README. |
 
 Only one ELF needs to be loaded. No HTML, CSS, or JavaScript files need to be transferred to the console.
 
@@ -59,13 +59,13 @@ The installed ELF can be selected from your payload launcher for later sessions.
 
 ### Notifications
 
-Notifications use the XAVATAR logo and include the developer/version line:
+Notifications include the developer/version line:
 
 ```text
-Haider A.H (c) 1.0.3V
+Haider A.H (c) 1.1.0V
 ```
 
-The logo is bundled in both ELFs and exported automatically to `/user/data/XAVATAR/notification.png`, a location intended for ShellUI image access. No manual image transfer is needed. If icon preparation or notification submission fails, the payload falls back to the system icon while keeping the credit line.
+When you create or install an avatar, the notification shows the avatar image itself. Other messages (startup, service status, and errors) use the bundled XAVATAR logo. Images are exported automatically to `/user/data/XAVATAR/`, a location intended for ShellUI image access, so no manual image transfer is needed. If icon preparation or notification submission fails, the payload falls back to the system icon while keeping the credit line.
 
 ## How to Use
 
@@ -77,7 +77,11 @@ Open **`http://YOUR-PS4-IP:4002`** on a phone or computer connected to the same 
 | **Create XAVATAR file** | Save a reusable `.xavatar` package to `/data/AVATARS`. |
 | **Create & install** | Apply the avatar and save a copy to the library. |
 
-Select an image, adjust its square crop, choose a PS4 user when installing, and complete the operation. The **Library** displays saved avatars and lets you install them for any available user.
+Choose an image from your device, or paste a link to one, adjust its square crop, choose a PS4 user when installing, and complete the operation. The **Library** displays saved avatars and lets you install them for any available user.
+
+### Image links
+
+Paste a direct `http://` or `https://` link to a PNG, JPG or WebP image and select **Load**. The console downloads the image itself, so the link works even when the image host does not allow cross-origin browser access. Links up to 8 MiB are supported, and animated GIFs are not supported through links. If a link still cannot be loaded, download the image and choose the file instead.
 
 ### Library files
 
@@ -91,7 +95,7 @@ The language menu defaults to **Automatic (PS4)**. The payload reads the console
 
 The 11 interface languages are **English, Arabic, French, Spanish, German, Italian, Portuguese, Russian, Turkish, Japanese and Chinese**. Arabic uses a right-to-left layout. Select a language manually at any time, or return to **Automatic (PS4)**. The preference is saved in that browser for the console's address and automatic mode checks the console language again on each status refresh. System notifications remain in English.
 
-These features are included in **v1.0.3**, available from the [Releases Page](https://github.com/h5d7r/XAVATAR/releases/latest).
+These features are included in **v1.1.0**, available from the [Releases Page](https://github.com/h5d7r/XAVATAR/releases/latest).
 
 Sign out and back in after installation to refresh the console's avatar. Existing profile metadata is preserved, and replaced images are backed up automatically.
 

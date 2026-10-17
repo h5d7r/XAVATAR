@@ -231,9 +231,37 @@ void xa_log(const char *message) {
 #endif
 }
 
-/* ShellUI can read custom notification images from /user/data. The original
-   PNG is bundled in the ELF; exporting it never needs a manual file transfer.
- */
+/* ShellUI can read custom notification images from /user/data. Exported PNGs
+   never need a manual file transfer; the original logo is bundled in the ELF. */
+static int png_bytes(const void *data, size_t size) {
+  return data && size >= 8 && !memcmp(data, "\211PNG\r\n\032\n", 8);
+}
+
+/* Writes data to the absolute path atomically when it differs from what is
+   already there. Returns 0 on success, -1 when the image cannot be exported. */
+static int export_image(const char *absolute, const unsigned char *data,
+                        size_t size) {
+  char directory[1100], path[1200], temporary[1200], staged[1300];
+  xa_path(directory, sizeof(directory), "/user/data/XAVATAR");
+  xa_path(path, sizeof(path), absolute);
+  if (xa_mkdirs(directory))
+    return -1;
+  Blob existing = {0};
+  int matches = !xa_read(path, &existing, XA_MAX_PACKAGE) &&
+                existing.size == size && !memcmp(existing.data, data, size);
+  free(existing.data);
+  if (matches)
+    return 0;
+  snprintf(temporary, sizeof(temporary), "%s/.notification-XXXXXX", directory);
+  if (!mkdtemp(temporary))
+    return -1;
+  snprintf(staged, sizeof(staged), "%s/icon.png", temporary);
+  int failed = xa_write_new(staged, data, size) || rename(staged, path);
+  unlink(staged);
+  rmdir(temporary);
+  return failed ? -1 : 0;
+}
+
 static const char *notification_icon(void) {
   static char uri[1400];
   static int prepared;
@@ -243,42 +271,48 @@ static const char *notification_icon(void) {
   snprintf(uri, sizeof(uri),
            "cxml://psnotification/tex_default_icon_notification");
   const XaAsset *logo = xa_asset_get("logo.png");
-  if (!logo || logo->size < 8 || memcmp(logo->data, "\211PNG\r\n\032\n", 8))
+  if (!png_bytes(logo ? logo->data : NULL, logo ? logo->size : 0))
     return uri;
-  char directory[1100], path[1200], temporary[1200], staged[1300];
-  xa_path(directory, sizeof(directory), "/user/data/XAVATAR");
-  xa_path(path, sizeof(path), "/user/data/XAVATAR/notification.png");
-  if (xa_mkdirs(directory)) {
+  if (export_image("/user/data/XAVATAR/notification.png", logo->data,
+                   logo->size)) {
     xa_log("Could not export notification logo; using the system icon.");
     return uri;
   }
-  Blob existing = {0};
-  int matches = !xa_read(path, &existing, XA_MAX_PACKAGE) &&
-                existing.size == logo->size &&
-                !memcmp(existing.data, logo->data, logo->size);
-  free(existing.data);
-  if (!matches) {
-    snprintf(temporary, sizeof(temporary), "%s/.notification-XXXXXX",
-             directory);
-    if (!mkdtemp(temporary))
-      return uri;
-    snprintf(staged, sizeof(staged), "%s/icon.png", temporary);
-    int failed =
-        xa_write_new(staged, logo->data, logo->size) || rename(staged, path);
-    unlink(staged);
-    rmdir(temporary);
-    if (failed) {
-      xa_log("Could not update notification logo; using the system icon.");
-      return uri;
-    }
-  }
   /* Direct absolute image paths are supported by the notification API. */
-  snprintf(uri, sizeof(uri), "%s", path);
+  xa_path(uri, sizeof(uri), "/user/data/XAVATAR/notification.png");
   return uri;
 }
 
-void xa_notify(const char *message) {
-  const char *icon = notification_icon();
+/* Exports the avatar the user just applied and uses it as the notification
+   icon, falling back to the bundled logo when the image is unusable. The
+   filename carries a content hash because ShellUI caches notification images
+   by path, which would otherwise keep showing the previous avatar. */
+static const char *notification_avatar(const void *data, size_t size) {
+  static char uri[1400];
+  static char previous[1400];
+  if (!png_bytes(data, size))
+    return notification_icon();
+  uint32_t hash = 2166136261u;
+  for (const unsigned char *p = data, *end = p + size; p < end; p++) {
+    hash ^= *p;
+    hash *= 16777619u;
+  }
+  char absolute[160], rooted[1400];
+  snprintf(absolute, sizeof(absolute),
+           "/user/data/XAVATAR/avatar-notification-%08x.png", hash);
+  xa_path(rooted, sizeof(rooted), absolute);
+  if (previous[0] && strcmp(previous, rooted))
+    unlink(previous);
+  if (export_image(absolute, data, size)) {
+    xa_log("Could not export avatar notification image; using the logo.");
+    return notification_icon();
+  }
+  snprintf(previous, sizeof(previous), "%s", rooted);
+  snprintf(uri, sizeof(uri), "%s", rooted);
+  return uri;
+}
+
+static void notify_with_icon(const char *message, const char *icon) {
   char text[0x400];
   const char *credit = XA_CREDIT;
   size_t available = sizeof(text) - strlen(credit) - 2;
@@ -302,6 +336,14 @@ void xa_notify(const char *message) {
   (void)icon;
 #endif
   xa_log(text);
+}
+
+void xa_notify(const char *message) {
+  notify_with_icon(message, notification_icon());
+}
+
+void xa_notify_avatar(const char *message, const void *png, size_t len) {
+  notify_with_icon(message, notification_avatar(png, len));
 }
 
 int xa_filename(const char *name) {

@@ -11,7 +11,7 @@ include $(PS4_PAYLOAD_SDK)/toolchain/orbis.mk
 TARGET := build/XAVATAR.elf
 INSTALLER := build/XAVATAR-installer.elf
 PAYLOAD_RESOURCE := build/payload.c
-LDLIBS := -lSceNet -lSceUserService -lSceSystemService
+LDLIBS := -lSceNet -lSceUserService -lSceSystemService -lSceHttp -lSceSsl
 endif
 
 CPPFLAGS := -Iinclude -Ivendor -DMINIZ_NO_STDIO -DMINIZ_NO_TIME -DMINIZ_NO_ZLIB_COMPATIBLE_NAMES
@@ -20,7 +20,7 @@ CPPFLAGS += -DXAVATAR_HOST
 LDLIBS += -lm
 endif
 CFLAGS := -O2 -g -Wall -Wextra -Wno-unused-function
-SOURCES := source/main.c source/platform.c source/avatar.c build/assets.c vendor/miniz.c vendor/miniz_zip.c vendor/miniz_tdef.c vendor/miniz_tinfl.c
+SOURCES := source/main.c source/platform.c source/net.c source/avatar.c build/assets.c vendor/miniz.c vendor/miniz_zip.c vendor/miniz_tdef.c vendor/miniz_tinfl.c
 
 .PHONY: all clean package
 all: $(TARGET) $(INSTALLER)
