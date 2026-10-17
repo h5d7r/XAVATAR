@@ -298,6 +298,19 @@ svg {
   border: 0;
   text-decoration: underline;
 }
+.update-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 5%;
+  background: #102a1c;
+  color: #b6f0cb;
+  font-size: 12px;
+}
+.update-banner a {
+  color: #7dffb0;
+  text-decoration: underline;
+}
 main {
   max-width: 1320px;
   margin: auto;

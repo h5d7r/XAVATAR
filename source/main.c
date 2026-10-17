@@ -90,7 +90,8 @@ static void response_headers(int fd, int code, const char *type, const void *bod
       "%sCache-Control: no-store\r\nX-Content-Type-Options: nosniff\r\n"
       "Content-Security-Policy: default-src 'self'; img-src 'self' blob: "
       "data: https: http:; style-src 'self'; script-src 'self'; connect-src "
-      "'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'\r\n\r\n",
+      "'self' https://api.github.com; object-src 'none'; base-uri 'none'; "
+      "frame-ancestors 'none'\r\n\r\n",
       code, reason, type, len, extra);
   if (n > 0 && (size_t)n < sizeof(header) && !send_all(fd, header, (size_t)n))
     send_all(fd, body, len);

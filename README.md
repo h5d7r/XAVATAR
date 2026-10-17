@@ -102,6 +102,10 @@ These features are included in **v1.1.0**, available from the [Releases Page](ht
 
 Sign out and back in after installation to refresh the console's avatar. Existing profile metadata is preserved, and replaced images are backed up automatically.
 
+### Update check
+
+The interface compares its version with the latest GitHub release and shows a banner with a download link when a newer version exists. The check runs once per page load from your browser and contacts only the GitHub API.
+
 ### Stop the Service
 
 Use the power button **Stop service** in the top bar to close port **4002** and end the payload. The interface stops reconnecting automatically and displays a stopped status. Load the normal payload or installer again when you want to reopen the studio, then select **Check again** in the browser.

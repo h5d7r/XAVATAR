@@ -26,6 +26,8 @@
     selected: "",
     busy: false,
     stopped: false,
+    version: "",
+    latestVersion: "",
     view: "create",
     zoom: 1,
     x: 0,
@@ -38,6 +40,7 @@
   var pollTimer = null;
   var userLoadPromise = null;
   var libraryLoadPromise = null;
+  var updateChecked = false;
   var canvas = $("cropCanvas");
   var context = canvas.getContext("2d");
 
@@ -138,6 +141,8 @@
       var status = await api("/api/status");
       if (state.stopped) return;
       if (status.name !== "XAVATAR") throw new Error("Unexpected service.");
+      state.version = status.version || state.version;
+      if (!updateChecked) checkForUpdates();
       if (state.systemLanguage !== status.language) {
         state.systemLanguage = status.language || "en";
         if (languageChoice === "auto") applyLanguage();
@@ -151,6 +156,43 @@
       connectionInFlight = false;
       updateAction();
     }
+  }
+
+  function isNewer(candidate, current) {
+    var a = String(candidate).split(".");
+    var b = String(current || "0").split(".");
+    for (var i = 0; i < Math.max(a.length, b.length); i++) {
+      var x = parseInt(a[i], 10) || 0;
+      var y = parseInt(b[i], 10) || 0;
+      if (x !== y) return x > y;
+    }
+    return false;
+  }
+
+  function paintUpdate() {
+    if (state.latestVersion)
+      $("updateText").textContent = t("XAVATAR {version} is available.", {
+        version: state.latestVersion,
+      });
+  }
+
+  async function checkForUpdates() {
+    if (updateChecked) return;
+    updateChecked = true;
+    try {
+      var response = await fetch(
+        "https://api.github.com/repos/h5d7r/XAVATAR/releases/latest",
+        { headers: { Accept: "application/vnd.github+json" } },
+      );
+      if (!response.ok) return;
+      var release = await response.json();
+      var latest = String(release.tag_name || "").replace(/^v/, "");
+      if (!latest || !isNewer(latest, state.version)) return;
+      state.latestVersion = latest;
+      if (release.html_url) $("updateLink").href = release.html_url;
+      paintUpdate();
+      $("updateBanner").hidden = false;
+    } catch (_) {}
   }
 
   function populateUsers(select, previous) {
@@ -941,6 +983,7 @@
     setConnection(state.connected, state.hostTest);
     mode(state.mode);
     renderLibrary();
+    paintUpdate();
   }
   var autoOption = document.createElement("option");
   autoOption.value = "auto";
