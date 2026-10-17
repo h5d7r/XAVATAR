@@ -1,5 +1,6 @@
 /* XAVATAR has no CDN dependencies. Uploaded images stay between this browser
-   and the PS4; linked images are fetched by the browser from their host. */
+   and the PS4; linked images are fetched by the console, with the browser as a
+   fallback when a host blocks direct browser access. */
 "use strict";
 (function () {
   var $ = function (id) {

@@ -83,6 +83,10 @@ Choose an image from your device, or paste a link to one, adjust its square crop
 
 Paste a direct `http://` or `https://` link to a PNG, JPG or WebP image and select **Load**. The console downloads the image itself, so the link works even when the image host does not allow cross-origin browser access. Links up to 8 MiB are supported, and animated GIFs are not supported through links. If a link still cannot be loaded, download the image and choose the file instead.
 
+### Where to find avatars
+
+Looking for ideas? The [PSPrices PS4 avatars collection](https://psprices.com/region-us/collection/avatars) lists avatars by game. Save an image you like to your phone or computer, or copy its address, then use **Choose image** or the image-link field above.
+
 ### Library files
 
 - **Upload XAVATAR** adds a `.xavatar` file from your phone or computer to `/data/AVATARS`. Choose its library name before uploading. Files up to 4 MiB are checked for valid avatar images and textures; existing filenames are never overwritten.
