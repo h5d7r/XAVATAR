@@ -176,23 +176,43 @@
       });
   }
 
-  async function checkForUpdates() {
-    if (updateChecked) return;
-    updateChecked = true;
+  async function fetchLatestRelease() {
+    var response = await fetch(
+      "https://api.github.com/repos/h5d7r/XAVATAR/releases/latest",
+      { headers: { Accept: "application/vnd.github+json" } },
+    );
+    if (!response.ok) throw new Error("Update request failed.");
+    return await response.json();
+  }
+
+  async function checkForUpdates(manual) {
+    if (!manual) {
+      if (updateChecked) return;
+      updateChecked = true;
+    }
+    if (manual) $("checkUpdates").disabled = true;
     try {
-      var response = await fetch(
-        "https://api.github.com/repos/h5d7r/XAVATAR/releases/latest",
-        { headers: { Accept: "application/vnd.github+json" } },
-      );
-      if (!response.ok) return;
-      var release = await response.json();
+      var release = await fetchLatestRelease();
       var latest = String(release.tag_name || "").replace(/^v/, "");
-      if (!latest || !isNewer(latest, state.version)) return;
-      state.latestVersion = latest;
       if (release.html_url) $("updateLink").href = release.html_url;
-      paintUpdate();
-      $("updateBanner").hidden = false;
-    } catch (_) {}
+      if (latest && isNewer(latest, state.version)) {
+        state.latestVersion = latest;
+        paintUpdate();
+        $("updateBanner").hidden = false;
+        if (manual)
+          toast(t("XAVATAR {version} is available.", { version: latest }));
+      } else if (manual) {
+        toast(
+          t("You're on the latest version ({version}).", {
+            version: state.version || latest,
+          }),
+        );
+      }
+    } catch (_) {
+      if (manual) toast(t("Could not check for updates. Try again."), true);
+    } finally {
+      if (manual) $("checkUpdates").disabled = false;
+    }
   }
 
   function populateUsers(select, previous) {
@@ -999,6 +1019,13 @@
     languageChoice = this.value;
     try { localStorage.setItem("xavatar.language", languageChoice); } catch (_) {}
     applyLanguage();
+  };
+  $("checkUpdates").onclick = function () {
+    if (!state.connected) {
+      toast(t("Connect to the payload to continue."), true);
+      return;
+    }
+    checkForUpdates(true);
   };
   $("uploadAvatar").onclick = function () {
     $("packageInput").value = "";

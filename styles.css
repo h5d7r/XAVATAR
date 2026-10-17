@@ -254,6 +254,31 @@ svg {
   background: #401728;
   border-color: var(--er);
 }
+.updates {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 11px;
+  min-height: 34px;
+  border: 1px solid #24314a;
+  border-radius: 20px;
+  background: #0e1626;
+  color: #9fb6d6;
+  font-size: 10px;
+  font-weight: 600;
+}
+.updates svg {
+  width: 14px;
+  height: 14px;
+}
+.updates:hover:not(:disabled) {
+  border-color: var(--ac2);
+  color: #cfe2ff;
+}
+.updates:disabled {
+  opacity: 0.55;
+}
 .connection {
   display: flex;
   align-items: center;

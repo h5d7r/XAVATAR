@@ -4,7 +4,7 @@ XAVATAR v1.1.0 adds image-link loading, avatar notifications, and an automatic u
 
 - **Image links:** paste a direct `http://` or `https://` link to a PNG, JPG or WebP image and select **Load**. The console downloads the image itself, so the link works even when the image host does not allow cross-origin browser access. Links up to 8 MiB are supported, and animated GIFs are not supported through links. If a link still cannot be loaded, download the image and choose the file instead.
 - **Avatar notifications:** creating or installing an avatar now shows the avatar image itself in the system notification. Startup, service-status, and error notifications keep the XAVATAR logo. Each avatar is exported under its own content-hashed file in `/user/data/XAVATAR/`, so the notification always reflects the newest avatar instead of a cached earlier one.
-- **Update check:** the interface compares its version with the latest GitHub release and shows a banner with a download link when a newer version exists. The check runs once per page load from your browser and contacts only the GitHub API.
+- **Update check:** the interface compares its version with the latest GitHub release and shows a banner with a download link when a newer version exists. The check runs automatically once per page load, and an **Updates** button checks on demand and reports whether you are on the latest version. The check runs from your browser and contacts only the GitHub API.
 - **Avatar ideas:** the image panel links to the [PSPrices PS4 avatars collection](https://psprices.com/region-us/collection/avatars). Save an image you like to your device, or copy its address, then use **Choose image** or the image-link field.
 
 ### Downloads

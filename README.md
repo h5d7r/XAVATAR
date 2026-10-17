@@ -104,7 +104,7 @@ Sign out and back in after installation to refresh the console's avatar. Existin
 
 ### Update check
 
-The interface compares its version with the latest GitHub release and shows a banner with a download link when a newer version exists. The check runs once per page load from your browser and contacts only the GitHub API.
+The interface compares its version with the latest GitHub release and shows a banner with a download link when a newer version exists. The check runs automatically once per page load, and the **Updates** button in the top bar checks on demand, reporting either that you are on the latest version or that an update is available. The check runs from your browser and contacts only the GitHub API.
 
 ### Stop the Service
 
